@@ -7,7 +7,7 @@ import (
 )
 
 var cache = make(map[string]Website) // Cache keep track of the webpages visited
-var lock = &sync.Mutex{}
+var cacheLock = &sync.Mutex{}
 
 // Website represents a page that the Scrapper has visisted
 type Website struct {
@@ -20,31 +20,31 @@ type Website struct {
 
 // GetSiteFromCache checks if a site from cache or nil if it does not exist
 func GetSiteFromCache(url string) Website {
-	lock.Lock()
-	defer lock.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	return cache[url]
 }
 
 /*
 // RemoveSiteFromCache removes a site from cache
 func RemoveSiteFromCache(url string) {
-	lock.Lock()
-	defer lock.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	delete(cache, url)
 }
 
 // IsSiteInCache checks if site exist in cache
 func IsSiteInCache(url string) bool {
-	lock.Lock()
-	defer lock.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	_, exists := cache[url]
 	return exists
 }
 */
 // AddSiteToCache adds a Website to cache, or updates existing entry
 func AddSiteToCache(s Website) {
-	lock.Lock()
-	defer lock.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	cache[s.URL] = s
 }
 

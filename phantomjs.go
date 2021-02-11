@@ -20,28 +20,11 @@ page.open(url, function () {
 });
 `
 
-func isPathExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-// https://stackoverflow.com/questions/60128401/how-to-check-if-a-file-is-executable-in-go
-func isPathExecutable(path string) bool {
-	fi, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return fi.Mode()&0111 != 0
-
-}
-
 // Get path to phantomJS wrapper script, which is the script that actually does the download
 // of webpage content and writes it to console. The wrapper script is executed by phantomjs binary.
 // If the script does not exist, it will be generated
 func getPhantomJSwrapperPath() string {
-	if !isPathExists(wrapperScriptPath) {
+	if !IsPathExists(wrapperScriptPath) {
 		// wrapper script does not exist, create it
 		fout, err := os.Create(wrapperScriptPath)
 		if err != nil {
@@ -66,7 +49,7 @@ func getPhantomJSbinPath() string {
 	paths := []string{os.Getenv("PHANTOMJS_BIN"), "/usr/local/bin/phantomjs", "./phantomjs"}
 
 	for _, p := range paths {
-		if isPathExists(p) && isPathExecutable(p) {
+		if IsPathExists(p) && IsPathExecutable(p) {
 			return p
 		}
 	}

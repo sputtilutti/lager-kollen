@@ -12,6 +12,7 @@ import (
 )
 
 var verboseLogging, _ = strconv.ParseBool(os.Getenv("VERBOSE"))
+var dryrun, _ = strconv.ParseBool(os.Getenv("DRYRUN"))
 
 func startWebServer(listenAddress string) {
 	sigs := make(chan os.Signal, 1)
@@ -27,26 +28,49 @@ func startWorkers(nWorkers int, urlQueue chan string) {
 	}
 }
 
-func startURLReader(urlsFile string, pollInterval int, urlQueue chan string) {
+// Read URLs from a file, if file exist.
+// Each URL is added to the URL repo/list
+func loadUrlsFile(urlsFile string) {
+	if !IsPathExists(urlsFile) {
+		return
+	}
+
 	log.Println("Reading URLs from", urlsFile)
 
+	fin, err := os.Open(urlsFile)
+	if err != nil {
+		log.Fatalf("Could not open urls file (%s) for reading", urlsFile)
+	}
+	defer fin.Close()
+
+	scanner := bufio.NewScanner(fin)
+	i := 0
+	for scanner.Scan() {
+		_, err := AddUrl(scanner.Text())
+		if err != nil {
+			log.Println("Error:", err)
+		} else {
+			i++
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Loaded %d urls from file", i)
+}
+
+// In a go-routine, periodically get the latest list of URLs and
+// send each URL to the worker for further processing
+func startURLPoller(pollInterval int, urlQueue chan string) {
 	go func() {
 		for {
-			fin, err := os.Open(urlsFile)
-			if err != nil {
-				log.Fatal("Could not open urls file for reading")
+			urls := GetUrls()
+			for _, url := range urls {
+				if url != "" {
+					urlQueue <- url
+				}
 			}
-
-			scanner := bufio.NewScanner(fin)
-			for scanner.Scan() {
-				urlQueue <- scanner.Text()
-			}
-
-			if err := scanner.Err(); err != nil {
-				log.Fatal(err)
-			}
-
-			fin.Close()
 			time.Sleep(time.Duration(pollInterval) * time.Second)
 		}
 	}()
@@ -66,10 +90,12 @@ func main() {
 
 	startWorkers(*nThreads, urlQueue)
 
-	// URL Reader reads URLs from file and sends it to workers
-	startURLReader(*urlsFile, *pollInterval, urlQueue)
+	loadUrlsFile(*urlsFile)
 
-	// Web server will block until application is stopped by SIGINT or SIGTERM
+	// URL Poller polls URLs and sends it to workers
+	startURLPoller(*pollInterval, urlQueue)
+
+	// Web server will block until application is stopped by SIGINT/SIGTERM
 	startWebServer(*listenAddress)
 
 	log.Println("Stopped")

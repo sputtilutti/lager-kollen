@@ -56,8 +56,6 @@ If you set `VERBOSE` env. variable, the script it will output verbose logging. E
 # Future enhancements
 
  - Persistent cache (-> sqlite?)
- - Use 1x worker go-thread per URL instead of worker pool
- - 'URL manager', logic to add/remove URLs in run-time
  - Render basic HTML page with website cache status
  - API to query website cache
  - Email notification

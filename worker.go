@@ -2,26 +2,10 @@ package main
 
 import (
 	"log"
-	neturl "net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
-
-// https://golangcode.com/how-to-check-if-a-string-is-a-url/
-func isValidUrl(url string) bool {
-	_, err := neturl.ParseRequestURI(url)
-	if err != nil {
-		return false
-	}
-
-	u, err := neturl.Parse(url)
-	if err != nil || u.Scheme == "" || u.Host == "" {
-		return false
-	}
-
-	return true
-}
 
 func scrapeSite(s Scraper, url string, html string) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
@@ -56,10 +40,6 @@ func scrapeSite(s Scraper, url string, html string) {
 func worker(urlQueue *chan string) {
 	// take a URL from queue
 	for url := range *urlQueue {
-		if !isValidUrl(url) {
-			continue
-		}
-
 		if verboseLogging {
 			log.Printf("Processing URL=%s", url)
 		}
@@ -68,6 +48,11 @@ func worker(urlQueue *chan string) {
 		scraper, err := GetScraperByURL(url)
 		if err != nil {
 			log.Printf("Failed to find a Scraper for url '%s'", url)
+			continue
+		}
+
+		// If we are doing a dryrun, just stop here
+		if dryrun {
 			continue
 		}
 
