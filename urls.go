@@ -17,6 +17,10 @@ func AddUrl(url string) (bool, error) {
 	if !IsValidUrl(url) {
 		return false, fmt.Errorf("URL '%s' is not a valid URL", url)
 	}
+	if _, err := GetScraperByURL(url); err != nil {
+		return false, fmt.Errorf("URL '%s' has no defined Scraper. %s is not supported", url, DomainFromURL(url))
+	}
+
 	urlLock.Lock()
 	defer urlLock.Unlock()
 	urls = append(urls, url)
