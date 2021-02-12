@@ -4,6 +4,7 @@ import (
 	neturl "net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 func DomainFromURL(url string) string {
@@ -44,4 +45,8 @@ func IsValidUrl(url string) bool {
 	}
 
 	return true
+}
+
+func NowTimeFormatted() string {
+	return time.Now().Format(time.RFC1123)
 }

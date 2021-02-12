@@ -29,7 +29,7 @@ func scrapeSite(s Scraper, url string, html string) {
 
 	// if we have the item in stock now, but we did not have it in stock before; send notification
 	if newSite.HasItemInStock && !oldSite.HasItemInStock {
-		log.Printf("Site %s has the item in stock!", newSite.Name())
+		log.Printf("Site %s has %s in stock!", newSite.Domain(), newSite.Product)
 		// TODO: notify
 	}
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -18,11 +18,30 @@ type Website struct {
 	HasItemInStock bool   `json:"hasItemInStock"`
 }
 
+// Sorting of Website
+type ByDomain []Website
+
+func (a ByDomain) Len() int           { return len(a) }
+func (a ByDomain) Less(i, j int) bool { return DomainFromURL(a[i].URL) < DomainFromURL(a[j].URL) }
+func (a ByDomain) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
 // GetSiteFromCache checks if a site from cache or nil if it does not exist
 func GetSiteFromCache(url string) Website {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 	return cache[url]
+}
+
+func GetAllWebsites() []Website {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	sites := make([]Website, 0, len(cache))
+
+	for _, website := range cache {
+		sites = append(sites, website)
+	}
+	sort.Sort(ByDomain(sites))
+	return sites
 }
 
 /*
@@ -58,8 +77,4 @@ func (w *Website) String() string {
 
 func (w *Website) Domain() string {
 	return DomainFromURL(w.URL)
-}
-
-func (w *Website) Name() string {
-	return fmt.Sprintf("%s - %s", w.Domain(), w.Product)
 }

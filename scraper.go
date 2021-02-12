@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -46,7 +45,7 @@ func (s *powerScraper) ScrapeSite(url string, doc *goquery.Document) (Website, e
 		Product:        productName,
 		LastStatusText: status,
 		HasItemInStock: hasItemInStock,
-		LastVisit:      time.Now().String()}, nil
+		LastVisit:      NowTimeFormatted()}, nil
 }
 
 func (s *powerScraper) Domain() string {
