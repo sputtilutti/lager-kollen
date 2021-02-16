@@ -7,7 +7,7 @@ import (
 )
 
 type Scraper interface {
-	ScrapeSite(url string, doc *goquery.Document) (Website, error)
+	ScrapeSite(site *Website, doc *goquery.Document) error
 	Domain() string
 }
 
@@ -25,27 +25,25 @@ func RegisterScraper(domain string, f ScraperFactory) {
 type powerScraper struct {
 }
 
-func (s *powerScraper) ScrapeSite(url string, doc *goquery.Document) (Website, error) {
-	productIntro := doc.Find("#product-intro")
-	if productIntro == nil {
-		return Website{}, fmt.Errorf("Could not find id '#product-intro' on URL '%s'", url)
+func (s *powerScraper) ScrapeSite(site *Website, doc *goquery.Document) error {
+	if !site.IsScraped() {
+		productIntro := doc.Find("#product-intro")
+		if productIntro == nil {
+			return fmt.Errorf("Could not find id '#product-intro' on '%s'", site.URL)
+		}
+		productName := productIntro.Find("h1").Text()
+		site.SetProduct(productName)
 	}
-	productName := productIntro.Find("h1").Text()
 
 	mainCard := doc.Find(".product-main-card")
 	if mainCard == nil {
-		return Website{}, fmt.Errorf("Could not find class '.product-main-card' on URL '%s'", url)
+		return fmt.Errorf("Could not find id '.product-main-card' on '%s'", site.URL)
 	}
 
 	status := mainCard.Find("pwr-product-stock-label").Text()
 	hasItemInStock := status != "Inte i lager"
-
-	return Website{
-		URL:            url,
-		Product:        productName,
-		LastStatusText: status,
-		HasItemInStock: hasItemInStock,
-		LastVisit:      NowTimeFormatted()}, nil
+	site.Update(status, hasItemInStock)
+	return nil
 }
 
 func (s *powerScraper) Domain() string {
@@ -61,8 +59,8 @@ func NewPowerScraper() (Scraper, error) {
 type komplettScraper struct {
 }
 
-func (s *komplettScraper) ScrapeSite(url string, doc *goquery.Document) (Website, error) {
-	return Website{}, nil
+func (s *komplettScraper) ScrapeSite(site *Website, doc *goquery.Document) error {
+	return nil
 }
 
 func (s *komplettScraper) Domain() string {
