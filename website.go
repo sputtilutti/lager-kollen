@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
@@ -12,11 +11,11 @@ var cacheLock = &sync.Mutex{}
 
 // Website represents a page that the Scrapper has visisted
 type Website struct {
-	URL            string `json:"url"`
-	Product        string `json:"product"`
-	LastScraped    string `json:"lastScraped"`
-	LastStatusText string `json:"lastStatusText"`
-	HasItemInStock bool   `json:"hasItemInStock"`
+	URL            string
+	product        string
+	lastScraped    string
+	lastStatusText string
+	hasItemInStock bool
 	sync.Mutex
 }
 
@@ -79,33 +78,48 @@ func AddSiteToCache(s *Website) {
 func (w *Website) ToString() string {
 	w.Lock()
 	defer w.Unlock()
-	out, err := json.Marshal(w)
-	if err != nil {
-		return ""
-	}
-	return string(out)
+	return fmt.Sprintf("url=%s, product=%s, lastStatus=%s, inStock=%v",
+		w.URL, w.product, w.lastStatusText, w.hasItemInStock)
 }
 
 func (w *Website) Domain() string {
 	return DomainFromURL(w.URL)
 }
 
+func (w *Website) HasItemInStock() bool {
+	w.Lock()
+	defer w.Unlock()
+	return w.hasItemInStock
+}
+
 func (w *Website) IsScraped() bool {
 	w.Lock()
 	defer w.Unlock()
-	return w.LastScraped != ""
+	return w.lastScraped != ""
+}
+
+func (w *Website) LastScraped() string {
+	w.Lock()
+	defer w.Unlock()
+	return w.lastScraped
 }
 
 func (w *Website) SetProduct(p string) {
 	w.Lock()
 	defer w.Unlock()
-	w.Product = p
+	w.product = p
+}
+
+func (w *Website) Product() string {
+	w.Lock()
+	defer w.Unlock()
+	return w.product
 }
 
 func (w *Website) Update(statusText string, hasItemInStock bool) {
 	w.Lock()
 	defer w.Unlock()
-	w.LastStatusText = statusText
-	w.HasItemInStock = hasItemInStock
-	w.LastScraped = NowTimeFormatted()
+	w.lastStatusText = statusText
+	w.hasItemInStock = hasItemInStock
+	w.lastScraped = NowTimeFormatted()
 }

@@ -8,6 +8,7 @@ import (
 )
 
 func debug(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func getQueryParam(r *http.Request, key string) (string, error) {
@@ -89,9 +90,9 @@ func overview(w http.ResponseWriter, r *http.Request) {
 	for _, ws := range GetAllSitesFromCache() {
 		html += "<tr>"
 		html += "<td>" + DomainFromURL(ws.URL) + "</td>"
-		html += "<td><a href=\"" + ws.URL + "\">" + ws.Product + "</a></td>"
-		html += "<td>" + ws.LastScraped + "</td>"
-		if ws.HasItemInStock {
+		html += "<td><a href=\"" + ws.URL + "\">" + ws.Product() + "</a></td>"
+		html += "<td>" + ws.LastScraped() + "</td>"
+		if ws.HasItemInStock() {
 			html += "<td style=\"background-color:MediumSeaGreen;\">YES!!</td>"
 		} else {
 			html += "<td style=\"background-color:Tomato;\">no</td>"
@@ -106,7 +107,7 @@ func overview(w http.ResponseWriter, r *http.Request) {
 func createWebServer(listenAddress string) {
 	http.HandleFunc("/", overview)
 	http.HandleFunc("/api", api)
-	http.HandleFunc("/debug", debug)
+	http.HandleFunc("/debug/", debug)
 	log.Println("Webserver starting. Listening on", listenAddress)
 	log.Fatal(http.ListenAndServe(listenAddress, nil))
 }

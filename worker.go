@@ -72,7 +72,7 @@ func scrapeSite(s Scraper, ws *Website, html string) {
 		log.Fatal(err)
 	}
 
-	hadItemInStock := ws.HasItemInStock
+	hadItemInStock := ws.HasItemInStock()
 
 	// do the scraping
 	err = s.ScrapeSite(ws, doc)
@@ -82,8 +82,8 @@ func scrapeSite(s Scraper, ws *Website, html string) {
 	}
 
 	// if we have the item in stock now, but we did not have it in stock before; send notification
-	if ws.HasItemInStock && !hadItemInStock {
-		log.Printf("Site %s has %s in stock!", ws.Domain(), ws.Product)
+	if ws.HasItemInStock() && !hadItemInStock {
+		log.Printf("Site %s has %s in stock!", ws.Domain(), ws.Product())
 		// TODO: notify
 	}
 }
