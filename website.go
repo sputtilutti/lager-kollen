@@ -26,20 +26,34 @@ func (a ByURL) Len() int           { return len(a) }
 func (a ByURL) Less(i, j int) bool { return a[i].URL < a[j].URL }
 func (a ByURL) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
-func NewSite(url string) (Website, error) {
+// Instantiate a empty Website struct
+func NewSite(url string) (*Website, error) {
 	if !IsValidUrl(url) {
-		return Website{}, fmt.Errorf("'%s' is not a valid URL", url)
+		return nil, fmt.Errorf("'%s' is not a valid URL", url)
 	}
-	return Website{URL: url}, nil
+	return &Website{URL: url}, nil
 }
 
 /*
-func GetSiteFromCache(url string) Website {
+// Get Website from cache.
+// If it does not exist, return a new empy Website struct (same as NewSite())
+func GetSiteFromCache(url string) (*Website, error) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
-	return cache[url]
+	ws, exists := cache[url]
+	if exists {
+		return ws, nil
+	}
+
+	ws, err := NewSite(url)
+	if err != nil {
+		return nil, err
+	}
+	cache[url] = ws
+	return ws, nil
 }
 */
+
 func GetAllSitesFromCache() []*Website {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()

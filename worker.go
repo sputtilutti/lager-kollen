@@ -28,13 +28,13 @@ func StartScrapingURL(url string) error {
 		return err
 	}
 
-	AddSiteToCache(&site)
+	AddSiteToCache(site)
 
 	// make a channel to communicate with the worker
 	ch := make(chan string)
 	wChannels[url] = ch
 	idx++
-	go worker(idx, &site, ch)
+	go worker(idx, site, ch)
 	return nil
 }
 

@@ -1,16 +1,43 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 )
 
-func debug(w http.ResponseWriter, r *http.Request) {
-
+func readCloseToString(rc io.ReadCloser) string {
+	buf := new(bytes.Buffer)
+	_, _ = buf.ReadFrom(rc)
+	return buf.String()
 }
 
+// POST /debug/scraper/{domain}
+// Method for test/debug.
+// POST html content to make the scraper for {domain} scrape the page
+func debugScraperPost(w http.ResponseWriter, r *http.Request) {
+
+	v := mux.Vars(r)
+	domain := v["domain"]
+	scraper, err := GetScraperByDomain(domain)
+	if err != nil {
+		fmt.Fprintf(w, "Failed to get scraper for domain '%s'. %s", domain, err.Error())
+		return
+	}
+	site, _ := NewSite("http://debug.lager-kollen.se") // any valid URL works
+
+	html := readCloseToString(r.Body)
+	defer r.Body.Close()
+
+	scrapeSite(scraper, site, html)
+	fmt.Fprintf(w, "Scraped: %s", site.ToString())
+}
+
+/*
 func getQueryParam(r *http.Request, key string) (string, error) {
 	params, provided := r.URL.Query()[key]
 	if provided {
@@ -18,44 +45,29 @@ func getQueryParam(r *http.Request, key string) (string, error) {
 	}
 	return "", fmt.Errorf("Missing query parameter: '%s'", key)
 }
+*/
 
-// GET /api?action={action}&url={url}
-func api(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		action, err := getQueryParam(r, "action")
-		if err != nil {
-			fmt.Fprint(w, err)
-			return
-		}
+// GET /api/urls/add/{url}
+func apiAddURL(w http.ResponseWriter, r *http.Request) {
+	v := mux.Vars(r)
+	url := v["url"]
 
-		url, err := getQueryParam(r, "url")
-		if err != nil {
-			fmt.Fprint(w, err)
-			return
-		}
-
-		res := handleApiAction(action, url)
-		fmt.Fprint(w, res)
-	} else {
-		// default, not found
-		w.WriteHeader(http.StatusNotFound)
+	if err := StartScrapingURL(url); err != nil {
+		fmt.Fprintf(w, "Failed to add URL. %s", err.Error())
+		return
 	}
+	fmt.Fprint(w, "URL added")
 }
 
-func handleApiAction(action string, url string) string {
-	if strings.EqualFold(action, "add") {
-		if err := StartScrapingURL(url); err != nil {
-			return err.Error()
-		}
-		return "URL added"
-	} else if strings.EqualFold(action, "remove") || strings.EqualFold(action, "delete") {
-		if err := StopScrapingURL(url); err != nil {
-			return err.Error()
-		}
-		return "URL removed"
-	}
+// GET /api/urls/remove/{url}
+func apiRemoveURL(w http.ResponseWriter, r *http.Request) {
+	v := mux.Vars(r)
+	url := v["url"]
 
-	return fmt.Sprintf("Unknown or unsupported action: '%s'", action)
+	if err := StopScrapingURL(url); err != nil {
+		fmt.Fprintf(w, "Failed to remove URL. %s", err.Error())
+	}
+	fmt.Fprint(w, "URL removed")
 }
 
 // display overview of scraped pages
@@ -105,9 +117,16 @@ func overview(w http.ResponseWriter, r *http.Request) {
 }
 
 func createWebServer(listenAddress string) {
-	http.HandleFunc("/", overview)
-	http.HandleFunc("/api", api)
-	http.HandleFunc("/debug/", debug)
+	r := mux.NewRouter()
+	r.HandleFunc("/", overview)
+
+	apiRoute := r.PathPrefix("/api").Subrouter()
+	apiRoute.HandleFunc("/urls/add/{url}", apiAddURL).Methods(http.MethodGet)
+	apiRoute.HandleFunc("/urls/remove/{url}", apiRemoveURL).Methods(http.MethodGet)
+
+	debugRoute := r.PathPrefix("/debug").Subrouter()
+	debugRoute.HandleFunc("/scraper/{domain}", debugScraperPost).Methods(http.MethodPost)
+
 	log.Println("Webserver starting. Listening on", listenAddress)
-	log.Fatal(http.ListenAndServe(listenAddress, nil))
+	log.Fatal(http.ListenAndServe(listenAddress, r))
 }
