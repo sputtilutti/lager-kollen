@@ -22,6 +22,29 @@ A *headless* browser would probably do the trick, which is what is mostly used w
 
 For each webpage scraped, dedicated code needs to be written to figure out what text to extract from it. I have thus far only implemented support for [power.se](https://www.power.se/) (which seems to work for any item on their page). Future sites will require you to add support for that specific site. The parsing of HTML code is done with [goquery](https://github.com/PuerkitoBio/goquery), which is similart to JQuery and works really nice.
 
+## What the script does
+
+You add URLs to the script. For each URL added, a go-routine is started that continously requests that webpage content of that URL. A [scraper.go](Scraper) is used to scrape the content and figure out if the item is in stock (compared to last time the page was scraped). If the item is in stock, a notification is (meant to be) sent alerting that it is time to unleash your big wallet.
+
+URLs can be removed, i.e. set to no longer be moitored. Adding/removing URLs are done via REST API, see below.
+
+## PhantomJS wrapper script
+
+`lager-kollen` will generate a Javascript wrapper script used to genrate and download webpage HTML content. It assumes you have `PhantomJS` installed already.
+
+Below is the sccript that it generates
+
+    >> cat /tmp/phantomjs-wrapper.js
+
+    var system = require('system');
+    url = system.args[1];
+    var page = require("webpage").create();
+    page.open(url, function () {
+        console.log(page.content);
+        phantom.exit();
+    });
+
+
 # Pre-reqs
 
 You need PhantomJS binary installed. `lager-kollen` will execute it for you and will try to find it automatically by looking at the following places:
@@ -53,10 +76,49 @@ If you set `VERBOSE` env. variable, the script it will output verbose logging. E
     2021/02/10 16:04:57 Processing URL=https://www.power.se/gaming/konsol/playstation-5/p-1077687/
     2021/02/10 16:05:02 Scraped: {"url":"https://www.power.se/gaming/konsol/playstation-5/p-1077687/","product":"PLAYSTATION 5PLAYSTATION 5","lastVisit":"2021-02-10 16:05:02.718922 +0100 CET m=+13.965400726","lastStatusText":"Inte i lager","hasItemInStock":false}
 
+# Build
+
+Simply execute 
+
+    go build
+
+# REST API
+
+## Add URL, path=/api/urls/add/{url}
+
+Add a URL to be monitored by the application.
+
+Example
+
+    curl 'http://localhost:8080/api/urls/add/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+
+## Remove URL, path=/api/urls/remove/{url}
+
+Remove URL from being monitored
+
+Example
+
+    curl 'http://localhost:8080/api/urls/remove/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+
+## Debug requests
+
+Debug requests are used to troubleshoot and test the application
+
+### Post HTML content from file and scrape it
+
+A way to more easily test the scraper, is to download the webpage content to file and then POST the file content to the script.
+
+First download the webpage content to .html file
+
+    phantomjs /tmp/phantomjs-wrapper.js https://www.power.se/gaming/konsol/playstation-5/p-1077687/ > power.se-PS5.html
+
+Then POST it to the script, you need to help it by naming the URL domain so that the correct scraper is used
+
+    curl -X POST -d @power.se-ps5.html http://localhost:8080/debug/scraper/power.se
+
+
 # Future enhancements
 
  - Persistent cache (-> sqlite?)
- - Render basic HTML page with website cache status
- - API to query website cache
  - Email notification
  - Push notification to mobile device or other apps??
