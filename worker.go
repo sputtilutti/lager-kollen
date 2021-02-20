@@ -91,6 +91,7 @@ func scrapeSite(s Scraper, ws *Website, html string) {
 func worker(id int, site *Website, msgs chan string) {
 	// take a site from queue
 
+	log.Printf("[%d] Monitoring url: %s", id, site.URL)
 	ticker := time.NewTicker(time.Duration(Config.pollInterval) * time.Second)
 
 	for {
@@ -123,11 +124,7 @@ func worker(id int, site *Website, msgs chan string) {
 			html := DownloadWebContent(site.URL)
 
 			scrapeSite(scraper, site, html)
-
-			if Config.verboseLogging {
-				log.Printf("[%d] Scraped: %v", id, site.ToString())
-			}
-
+			log.Printf("[%d] Scraped: %v", id, site.ToString())
 		}
 	}
 }
