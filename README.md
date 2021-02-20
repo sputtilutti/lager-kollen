@@ -2,6 +2,8 @@
 
 A solution to monitor specific item's stock/inventory status on selected websites in order to get alert when the item is in stock.
 
+![Overview page](overview-page.png "Overview page")
+
 Note: by 'solution' I actually mean Proof of Concept solution - the code works but does not provide a full solution (e.g. no notification). See background below.
 
 # Background
@@ -84,21 +86,22 @@ Simply execute
 
 # REST API
 
-## Add URL, path=/api/urls/add/{url}
+## Add URL, path=/api/urls/add?url={url}
 
 Add a URL to be monitored by the application.
 
 Example
 
-    curl 'http://localhost:8080/api/urls/add/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
-
 ## Remove URL, path=/api/urls/remove/{url}
+    curl 'http://localhost:8080/api/urls/add?url=https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+
+## Remove URL, path=/api/urls/remove?url=url
 
 Remove URL from being monitored
 
 Example
 
-    curl 'http://localhost:8080/api/urls/remove/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+    curl 'http://localhost:8080/api/urls/remove?url=https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
 
 ## Debug requests
 
@@ -110,12 +113,12 @@ A way to more easily test the scraper, is to download the webpage content to fil
 
 First download the webpage content to .html file
 
-    phantomjs /tmp/phantomjs-wrapper.js https://www.power.se/gaming/konsol/playstation-5/p-1077687/ > power.se-PS5.html
+    >> phantomjs /tmp/phantomjs-wrapper.js https://www.power.se/gaming/konsol/playstation-5/p-1077687/ > power.se-PS5.html
 
-Then POST it to the script, you need to help it by naming the URL domain so that the correct scraper is used
+Then POST it to the script, you need to help it by naming the URL domain so that the correct scraper is used and returns the output what was scraped:
 
-    curl -X POST -d @power.se-ps5.html http://localhost:8080/debug/scraper/power.se
-
+    >> curl -X POST -d @power.se-ps5.html http://localhost:8080/debug/scraper/power.se
+    Scraped: url=http://power.se, product=PLAYSTATION 5, lastStatus=Inte i lager, inStock=false
 
 # Future enhancements
 
