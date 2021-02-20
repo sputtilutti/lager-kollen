@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -27,12 +28,16 @@ type powerScraper struct {
 
 func (s *powerScraper) ScrapeSite(site *Website, doc *goquery.Document) error {
 	if !site.IsScraped() {
-		productIntro := doc.Find("#product-intro")
-		if productIntro == nil {
-			return fmt.Errorf("Could not find id '#product-intro' on '%s'", site.URL)
-		}
-		productName := productIntro.Find("h1").Text()
-		site.SetProduct(productName)
+		var productName = ""
+
+		doc.Find("pwr-product-page meta").Each(func(index int, item *goquery.Selection) {
+			content, _ := item.Attr("content")
+			itemprop, _ := item.Attr("itemprop")
+			if itemprop == "name" {
+				productName = content
+			}
+		})
+		site.SetProduct(strings.ToLower(productName))
 	}
 
 	mainCard := doc.Find(".product-main-card")
@@ -41,8 +46,12 @@ func (s *powerScraper) ScrapeSite(site *Website, doc *goquery.Document) error {
 	}
 
 	status := mainCard.Find("pwr-product-stock-label").Text()
-	hasItemInStock := status != "Inte i lager"
-	site.Update(status, hasItemInStock)
+	if len(status) == 0 {
+		return fmt.Errorf("Failed to scrape status text from %s", site.URL)
+	}
+	itemNotInStock := strings.EqualFold("inte i lager", status)
+	site.Update(status, !itemNotInStock)
+
 	return nil
 }
 
