@@ -2,6 +2,8 @@
 
 A solution to monitor specific item's stock/inventory status on selected websites in order to get alert when the item is in stock.
 
+![Overview page](overview-page.png "Overview page")
+
 Note: by 'solution' I actually mean Proof of Concept solution - the code works but does not provide a full solution (e.g. no notification). See background below.
 
 # Background
