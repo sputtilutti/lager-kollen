@@ -28,7 +28,7 @@ func debugScraperPost(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Failed to get scraper for domain '%s'. %s", domain, err.Error())
 		return
 	}
-	site, _ := NewSite("http://debug.lager-kollen.se") // any valid URL works
+	site, _ := NewSite("http://" + domain) // any valid URL works
 
 	html := readCloseToString(r.Body)
 	defer r.Body.Close()
