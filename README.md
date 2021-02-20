@@ -84,21 +84,21 @@ Simply execute
 
 # REST API
 
-## Add URL, path=/api/urls/add/{url}
+## Add URL, path=/api/urls/add?url={url}
 
 Add a URL to be monitored by the application.
 
 Example
 
-    curl 'http://localhost:8080/api/urls/add/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+    curl 'http://localhost:8080/api/urls/add?url=https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
 
-## Remove URL, path=/api/urls/remove/{url}
+## Remove URL, path=/api/urls/remove?url=url
 
 Remove URL from being monitored
 
 Example
 
-    curl 'http://localhost:8080/api/urls/remove/https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
+    curl 'http://localhost:8080/api/urls/remove?url=https://www.power.se/gaming/konsol/playstation-5/p-1077687/'
 
 ## Debug requests
 

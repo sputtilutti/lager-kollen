@@ -47,10 +47,10 @@ func getQueryParam(r *http.Request, key string) (string, error) {
 }
 */
 
-// GET /api/urls/add/{url}
+// GET /api/urls/add?url={url}
 func apiAddURL(w http.ResponseWriter, r *http.Request) {
-	v := mux.Vars(r)
-	url := v["url"]
+	v := r.URL.Query()
+	url := v.Get("url")
 
 	if err := StartScrapingURL(url); err != nil {
 		fmt.Fprintf(w, "Failed to add URL. %s", err.Error())
@@ -61,8 +61,8 @@ func apiAddURL(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/urls/remove/{url}
 func apiRemoveURL(w http.ResponseWriter, r *http.Request) {
-	v := mux.Vars(r)
-	url := v["url"]
+	v := r.URL.Query()
+	url := v.Get("url")
 
 	if err := StopScrapingURL(url); err != nil {
 		fmt.Fprintf(w, "Failed to remove URL. %s", err.Error())
@@ -121,8 +121,8 @@ func createWebServer(listenAddress string) {
 	r.HandleFunc("/", overview)
 
 	apiRoute := r.PathPrefix("/api").Subrouter()
-	apiRoute.HandleFunc("/urls/add/{url}", apiAddURL).Methods(http.MethodGet)
-	apiRoute.HandleFunc("/urls/remove/{url}", apiRemoveURL).Methods(http.MethodGet)
+	apiRoute.HandleFunc("/urls/add", apiAddURL).Methods(http.MethodGet)
+	apiRoute.HandleFunc("/urls/remove", apiRemoveURL).Methods(http.MethodGet)
 
 	debugRoute := r.PathPrefix("/debug").Subrouter()
 	debugRoute.HandleFunc("/scraper/{domain}", debugScraperPost).Methods(http.MethodPost)
